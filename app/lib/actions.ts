@@ -41,10 +41,16 @@ export default async function createInvoice(formData: FormData) {
   });
   const amountInCent = amount * 100;
   const date = new Date().toISOString().split('T')[0];
-  await sql`
+  try {
+    await sql`
   INSERT INTO invoices (customer_id, amount, status, date)
   VALUES (${customerId}, ${amountInCent}, ${status}, ${date})
   `;
+  } catch (error) {
+    return {
+      message: 'Database Error: Failed to Create Invoice.',
+    };
+  }
 
   // const pathname = '/dashboard/invoices';
 
@@ -67,20 +73,38 @@ export const updateInvoice = async (id: string, formData: FormData) => {
 
   const amountInCent = amount * 100;
 
-  await sql`
+  try {
+    await sql`
     UPDATE invoices
     SET customer_id = ${customerId}, amount = ${amountInCent}, status = ${status}
     WHERE id = ${id}
   `;
+  } catch (error) {
+    return {
+      message: 'Database Error: Failed to Update Invoice.',
+    };
+  }
   // revalidatePath('/dashboard/invoices');
   // redirect('/dashboard/invoices');
+  // 这里执行了跳转，因此不需要返回成功信息
   refreshInvoicePath();
 };
 
 export const deleteVoice = async (id: string) => {
-  await sql`
+  // 发生错误时，页面仍然在路由页面
+  throw Error('Failed to Delete Invoice');
+  try {
+    await sql`
     DELETE FROM invoices WHERE id = ${id}
   `;
+    return {
+      message: 'Deleted Invoice.',
+    };
+  } catch (error) {
+    return {
+      message: 'Database Error: Failed to Delete Invoice.',
+    };
+  }
   // 重新获取数据
   revalidatePath('/dashboard/invoices');
 };
