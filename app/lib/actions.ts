@@ -76,3 +76,11 @@ export const updateInvoice = async (id: string, formData: FormData) => {
   // redirect('/dashboard/invoices');
   refreshInvoicePath();
 };
+
+export const deleteVoice = async (id: string) => {
+  await sql`
+    DELETE FROM invoices WHERE id = ${id}
+  `;
+  // 重新获取数据
+  revalidatePath('/dashboard/invoices');
+};
