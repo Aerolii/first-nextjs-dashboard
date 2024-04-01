@@ -2,24 +2,26 @@
 
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
+import { useDebouncedCallback } from 'use-debounce';
 
 // 注意：
 // 在这个组件中，并没有使用 React State 而是用 URL 管理
 export default function Search({ placeholder }: { placeholder: string }) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const router = useRouter();
+  const { replace } = useRouter();
 
-  function handleSearch(term: string) {
+  // Hook 必须在 React 组件顶层使用
+  const handleSearch = useDebouncedCallback((term) => {
     const params = new URLSearchParams(searchParams);
+    params.set('page', '1');
     if (term) {
       params.set('query', term);
     } else {
-      params.delete('query', term);
+      params.delete('query');
     }
-    console.log('params :>> ', params);
-    router.replace(`${pathname}?${params.toString()}`);
-  }
+    replace(`${pathname}?${params.toString()}`);
+  }, 300);
 
   return (
     <div className="relative flex flex-1 flex-shrink-0">
