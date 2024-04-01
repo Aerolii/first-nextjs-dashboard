@@ -15,6 +15,16 @@ const FormSchema = z.object({
 
 const CreateInvoice = FormSchema.omit({ id: true, date: true });
 
+const refreshInvoicePath = () => {
+  const pathname = '/dashboard/invoices';
+
+  // 数据库更新后，/dashboard/invoices路径将重新验证，并且将从服务器获取新数据。
+  revalidatePath(pathname);
+
+  // 将用户重定向回该/dashboard/invoices页面
+  redirect(pathname);
+};
+
 export default async function createInvoice(formData: FormData) {
   // const rawFormData = {
   //   customerId: formData.get('customerId'),
@@ -36,11 +46,33 @@ export default async function createInvoice(formData: FormData) {
   VALUES (${customerId}, ${amountInCent}, ${status}, ${date})
   `;
 
-  const pathname = '/dashboard/invoices';
+  // const pathname = '/dashboard/invoices';
 
-  // 数据库更新后，/dashboard/invoices路径将重新验证，并且将从服务器获取新数据。
-  revalidatePath(pathname);
+  // // 数据库更新后，/dashboard/invoices路径将重新验证，并且将从服务器获取新数据。
+  // revalidatePath(pathname);
 
-  // 将用户重定向回该/dashboard/invoices页面
-  redirect(pathname);
+  // // 将用户重定向回该/dashboard/invoices页面
+  // redirect(pathname);
+
+  refreshInvoicePath();
 }
+
+const UpdateInvoice = FormSchema.omit({ id: true, date: true });
+export const updateInvoice = async (id: string, formData: FormData) => {
+  const { customerId, amount, status } = UpdateInvoice.parse({
+    customerId: formData.get('customerId'),
+    amount: formData.get('amount'),
+    status: formData.get('status'),
+  });
+
+  const amountInCent = amount * 100;
+
+  await sql`
+    UPDATE invoices
+    SET customer_id = ${customerId}, amount = ${amountInCent}, status = ${status}
+    WHERE id = ${id}
+  `;
+  // revalidatePath('/dashboard/invoices');
+  // redirect('/dashboard/invoices');
+  refreshInvoicePath();
+};
