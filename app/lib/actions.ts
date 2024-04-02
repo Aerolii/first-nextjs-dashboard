@@ -81,7 +81,6 @@ export default async function createInvoice(
   INSERT INTO invoices (customer_id, amount, status, date)
   VALUES (${customerId}, ${amountInCent}, ${status}, ${date})
   `;
-    return {};
   } catch (error) {
     return {
       message: 'Database Error: Failed to Create Invoice.',
@@ -97,15 +96,34 @@ export default async function createInvoice(
   // redirect(pathname);
 
   refreshInvoicePath();
+  return {};
 }
 
 const UpdateInvoice = FormSchema.omit({ id: true, date: true });
-export const updateInvoice = async (id: string, formData: FormData) => {
-  const { customerId, amount, status } = UpdateInvoice.parse({
+export const updateInvoice = async (
+  id: string,
+  prevState: State,
+  formData: FormData,
+) => {
+  // const { customerId, amount, status } = UpdateInvoice.parse({
+  //   customerId: formData.get('customerId'),
+  //   amount: formData.get('amount'),
+  //   status: formData.get('status'),
+  // });
+  const validatedFields = UpdateInvoice.safeParse({
     customerId: formData.get('customerId'),
     amount: formData.get('amount'),
     status: formData.get('status'),
   });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Update Invoice.',
+    };
+  }
+
+  const { customerId, amount, status } = validatedFields.data;
 
   const amountInCent = amount * 100;
 
@@ -124,6 +142,7 @@ export const updateInvoice = async (id: string, formData: FormData) => {
   // redirect('/dashboard/invoices');
   // 这里执行了跳转，因此不需要返回成功信息
   refreshInvoicePath();
+  return {};
 };
 
 export const deleteVoice = async (id: string) => {
