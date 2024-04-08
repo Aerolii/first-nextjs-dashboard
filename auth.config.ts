@@ -14,10 +14,16 @@ export const authConfig = {
         } else {
           return false; // Redirect unauthenticated users to login page
         }
+        // } else if (isLogged) {
+        //   return Response.redirect(new URL('/dashboard', nextUrl));
+        // }
       } else if (isLogged) {
-        return Response.redirect(new URL('/dashboard', nextUrl));
+        if (nextUrl.pathname.startsWith('/login')) {
+          return Response.redirect(new URL('/dashboard', nextUrl));
+        } else {
+          return true;
+        }
       }
-
       return true;
     },
   },
