@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation';
 
 import { signIn } from '@/auth';
 import { AuthError } from 'next-auth';
+import bcrypt from 'bcrypt';
 
 const FormSchema = z.object({
   id: z.string(),
@@ -47,7 +48,6 @@ export default async function createInvoice(
   prevState: State,
   formData: FormData,
 ) {
-  console.log('prevState :>> ', prevState);
   // const rawFormData = {
   //   customerId: formData.get('customerId'),
   //   amount: formData.get('amount'),
@@ -171,7 +171,7 @@ export async function authenticate(
   formData: FormData,
 ) {
   try {
-    const user = await signIn('credentials', formData);
+    await signIn('credentials', formData);
   } catch (error) {
     if (error instanceof AuthError) {
       switch (error.type) {
@@ -184,3 +184,90 @@ export async function authenticate(
     throw error;
   }
 }
+
+// const FormSchema = z.object({
+//   id: z.string(),
+//   customerId: z.string({
+//     invalid_type_error: 'Please select a customer.',
+//   }),
+//   amount: z.coerce
+//     .number()
+//     .gt(0, { message: 'Please enter an amount greater than $0.' }),
+//   status: z.enum(['pending', 'paid'], {
+//     invalid_type_error: 'Please select an invoice status.',
+//   }),
+//   date: z.string(),
+// });
+
+const RegisterFormSchema = z.object({
+  username: z
+    .string({ invalid_type_error: 'Please enter username than 2 chart' })
+    .min(2),
+  email: z.string({ invalid_type_error: 'Please enter your email' }).email(),
+  password: z
+    .string({ invalid_type_error: 'Please enter password than 6 chart' })
+    .min(6),
+  confirmPassword: z
+    .string({ invalid_type_error: 'Please enter your password confirm' })
+    .min(6),
+});
+
+export type RegisterState = {
+  errors?: {
+    username?: string[];
+    email?: string[];
+    password?: string[];
+    confirmPassword?: string[];
+  };
+  message?: string | null;
+};
+
+export const registerAuthenticate = async (
+  prevState: RegisterState,
+  formData: FormData,
+) => {
+  const validatedFields = RegisterFormSchema.safeParse({
+    username: formData.get('username'),
+    email: formData.get('email'),
+    password: formData.get('password'),
+    confirmPassword: formData.get('confirmPassword'),
+  });
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Register',
+    };
+  }
+  const {
+    username: name,
+    password,
+    confirmPassword,
+    email,
+  } = validatedFields.data;
+  if (confirmPassword !== password) {
+    return {
+      errors: {
+        password: ['Please check your password'],
+
+        confirmPassword: ['Please check your confirm password'],
+      },
+      message: 'Missing Fields. Failed to Register',
+    };
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  try {
+    await sql`
+        INSERT INTO users (name, email, password)
+        VALUES ( ${name}, ${email}, ${hashedPassword})
+        ON CONFLICT (id) DO NOTHING;
+      `;
+  } catch (error) {
+    return {
+      message: 'Database Error: Failed to Register.',
+    };
+  }
+
+  // 将用户重定向回该/dashboard/invoices页面
+  redirect('/login');
+};

@@ -60,7 +60,7 @@ export default function LoginForm() {
             </div>
           </div>
         </div>
-        <LoginButton />
+        <FormSubmitButton text="Log in" />
         <div className="flex h-8 items-end space-x-1">
           {/* Add form errors here */}
           <div
@@ -81,11 +81,11 @@ export default function LoginForm() {
   );
 }
 
-function LoginButton() {
+export function FormSubmitButton({ text }: { text: string }) {
   const { pending } = useFormStatus();
   return (
     <Button className="mt-4 w-full" aria-disabled={pending}>
-      Log in <ArrowRightIcon className="ml-auto h-5 w-5 text-gray-50" />
+      {text} <ArrowRightIcon className="ml-auto h-5 w-5 text-gray-50" />
     </Button>
   );
 }
