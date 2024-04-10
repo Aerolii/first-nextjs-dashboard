@@ -14,16 +14,16 @@ export const authConfig = {
         } else {
           return false; // Redirect unauthenticated users to login page
         }
-        // } else if (isLogged) {
-        //   return Response.redirect(new URL('/dashboard', nextUrl));
-        // }
       } else if (isLogged) {
-        if (nextUrl.pathname.startsWith('/login')) {
-          return Response.redirect(new URL('/dashboard', nextUrl));
-        } else {
-          return true;
-        }
+        return Response.redirect(new URL('/dashboard', nextUrl));
       }
+      // } else if (isLogged) {
+      //   if (nextUrl.pathname.startsWith('/login')) {
+      //     return Response.redirect(new URL('/dashboard', nextUrl));
+      //   } else {
+      //     return true;
+      //   }
+      // }
       return true;
     },
     session: async ({ session, token }) => {
